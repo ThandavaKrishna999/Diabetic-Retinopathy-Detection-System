@@ -1,4 +1,4 @@
-# Diabetic Retinopathy Detector
+# Diabetic Retinopathy Detection System
 
 Flask web application for diabetic retinopathy screening from retinal fundus images using a MobileNetV2 + GCN hybrid model, Grad-CAM visualizations, and doctor-focused case management.
 
