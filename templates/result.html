@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Diagnosis Result - DR Detector{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12 d-flex justify-content-between align-items-center">
+        <h2>Diagnosis Result</h2>
+        <div>
+            <a href="{{ url_for('report', id=entry.id) }}" target="_blank" class="btn btn-outline-dark">🖨️ Print Report</a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary">Back to Dashboard</a>
+        </div>
+    </div>
+</div>
+
+<!-- Patient Info Summary -->
+<div class="card mb-4 shadow-sm border-0 bg-light">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3"><strong>Patient:</strong> {{ entry.patient_name }}</div>
+            <div class="col-md-2"><strong>Age:</strong> {{ entry.patient_age }}</div>
+            <div class="col-md-3"><strong>Date:</strong> {{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</div>
+            <div class="col-md-4"><strong>Enhancement:</strong> {{ entry.enhancement_used }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <!-- Prediction Card -->
+    <div class="col-md-12">
+        <div class="card shadow mb-4 border-{{ 'success' if entry.prediction == 'No DR' else 'danger' }}">
+            <div class="card-header bg-{{ 'success' if entry.prediction == 'No DR' else 'danger' }} text-white">
+                <h3 class="mb-0 text-center">Prediction: {{ entry.prediction }}</h3>
+            </div>
+            <div class="card-body text-center">
+                <h4 class="card-title">AI Confidence: {{ "%.2f"|format(entry.confidence) }}%</h4>
+                <p class="card-text lead mt-3">
+                    {% if entry.prediction == 'No DR' %}
+                    The AI analysis suggests <strong>no signs of Diabetic Retinopathy</strong>.
+                    <br><small>Recommendation: Routine annual screening.</small>
+                    {% elif entry.prediction == 'Mild' %}
+                    The AI detected <strong>Mild Non-Proliferative DR</strong>.
+                    <br><small>Recommendation: Microaneurysms detected. Monitor closely.</small>
+                    {% elif entry.prediction == 'Moderate' %}
+                    The AI detected <strong>Moderate Non-Proliferative DR</strong>.
+                    <br><small>Recommendation: Refer to ophthalmologist for further evaluation.</small>
+                    {% elif entry.prediction == 'Severe' %}
+                    The AI detected <strong>Severe Non-Proliferative DR</strong>.
+                    <br><small>Recommendation: Urgent referral required.</small>
+                    {% else %}
+                    The AI detected <strong>Proliferative DR</strong>.
+                    <br><small>Recommendation: Immediate medical intervention required.</small>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Original Image -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100 shadow">
+            <div class="card-header">Original Fundus Image</div>
+            <div class="card-body text-center bg-dark">
+                <img src="{{ url_for('static', filename=entry.original_path) }}" class="img-fluid" alt="Original Image">
+            </div>
+        </div>
+    </div>
+
+    <!-- Grad-CAM Heatmap -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100 shadow border-info">
+            <div class="card-header bg-info text-white">
+                AI Attention Map (Grad-CAM)
+                <span class="float-end" data-bs-toggle="tooltip" title="Red areas highlight regions that contributed most to the AI's decision">ℹ️</span>
+            </div>
+            <div class="card-body text-center bg-dark">
+                <img src="{{ url_for('static', filename=entry.heatmap_path) }}" class="img-fluid" alt="Grad-CAM Heatmap">
+            </div>
+            <div class="card-footer text-muted small">
+                Red/Yellow regions indicate the specific areas (lesions, hemorrhages) the model focused on to make the diagnosis.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block title %}Case Result - DR Detector{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12 d-flex justify-content-between align-items-center">
+        <h2>Diagnosis Result</h2>
+        <div>
+            <a href="{{ url_for('export_pdf', case_id=case_id) }}" class="btn btn-primary">📄 Download PDF Report</a>
+            <button onclick="window.print()" class="btn btn-outline-secondary">🖨️ Print View</button>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary">Back to Dashboard</a>
+        </div>
+    </div>
+</div>
+
+<!-- Patient Info Summary -->
+<div class="card shadow-sm mb-4 border-0">
+    <div class="card-body">
+                <!-- Patient History Chart -->
+{% if timeline.dates|length > 1 %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card shadow-sm">
+            <div class="card-header border-0 bg-white fw-bold d-flex align-items-center gap-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 3V21H21" stroke="var(--primary-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M18 9L13 14L10 11L6 15" stroke="var(--primary-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Disease Progression Timeline
+            </div>
+            <div class="card-body">
+                <canvas id="timelineChart" style="max-height: 250px;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row">
+            <div class="col-md-3"><strong>Patient:</strong> <span class="text-primary">{{ entries[0].patient_name }}</span></div>
+            <div class="col-md-2"><strong>Age:</strong> {{ entries[0].patient_age }}</div>
+            <div class="col-md-3"><strong>Date:</strong> {{ entries[0].timestamp.strftime('%Y-%m-%d %H:%M') }}</div>
+            <div class="col-md-4"><strong>Case ID:</strong> <small class="text-muted">{{ case_id }}</small></div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <ul class="nav nav-tabs nav-justified" id="resultTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="ai-insights-tab" data-bs-toggle="tab" data-bs-target="#ai-insights" type="button" role="tab">AI Insights</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="clinical-data-tab" data-bs-toggle="tab" data-bs-target="#clinical-data" type="button" role="tab">Clinical Data</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="retinal-imagery-tab" data-bs-toggle="tab" data-bs-target="#retinal-imagery" type="button" role="tab">Retinal Imagery</button>
+            </li>
+        </ul>
+        <div class="tab-content card shadow-sm" id="resultTabsContent">
+            <div class="tab-pane fade show active" id="ai-insights" role="tabpanel">
+                <div class="row p-4">
+                    {% for entry in entries %}
+                    <div class="col-lg-6 mb-4">
+                        <h4 class="mb-3">{{ entry.eye_side }} Eye ({{ 'OS' if entry.eye_side == 'Left' else 'OD' }}) - <span class="text-primary">{{ entry.prediction }}</span></h4>
+                        <div class="mb-3 text-center">
+                            <h5 class="text-primary">Diagnostic Confidence</h5>
+                            <div class="progress" style="height: 25px; background-color: #e9ecef;">
+                                <div class="progress-bar bg-{{ 'success' if entry.confidence > 90 else 'warning' if entry.confidence > 75 else 'danger' }}" 
+                                     role="progressbar" 
+                                     style="width: {{ entry.confidence }}%;"
+                                     aria-valuenow="{{ entry.confidence }}"
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                     {{ "%.2f"|format(entry.confidence) }}%
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3 p-3 rounded" style="background: #f8f9fa; border: 1px solid #dee2e6;">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span>Progression Risk (12 Months)</span>
+                                <span class="badge bg-{{ 'danger' if entry.risk_data.level == 'Critical' else 'warning' if entry.risk_data.level == 'High' else 'info' }}">
+                                    {{ entry.risk_data.level }}
+                                </span>
+                            </div>
+                            <div class="progress" style="height: 6px; background-color: #e9ecef;">
+                                <div class="progress-bar bg-{{ 'danger' if entry.risk_data.level == 'Critical' else 'warning' if entry.risk_data.level == 'High' else 'info' }}" 
+                                     style="width: {{ entry.risk_data.score }}%"></div>
+                            </div>
+                            <small class="text-muted d-block mt-1">AI projects {{ 'stabilization' if entry.risk_data.next_year_forecast <= 1 else 'potential progression' }} based on age/stage.</small>
+                        </div>
+                        <div class="mt-3 p-3 rounded" style="background: #eef2ff; border: 1px solid #c7d2fe;">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="text-primary mb-0">X AI (Grok) Explanation</h6>
+                                <span class="badge bg-primary">{{ entry.explanation.source if entry.explanation.source else 'Local AI' }}</span>
+                            </div>
+                            <p class="mb-0 text-dark">{{ entry.explanation.explanation if entry.explanation.explanation else entry.explanation }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="tab-pane fade" id="clinical-data" role="tabpanel">
+                <div class="row p-4">
+                    {% for entry in entries %}
+                    <div class="col-lg-6 mb-4">
+                        <h4 class="mb-3">{{ entry.eye_side }} Eye Clinical Data</h4>
+                        <p><strong>Findings:</strong> {{ entry.clinical.description }}</p>
+                        <div class="alert alert-{{ 'success' if entry.clinical.urgency == 'Low' else 'warning' if entry.clinical.urgency == 'Moderate' else 'danger' }} mt-3">
+                            <h6 class="alert-heading">Recommendation (Urgency: {{ entry.clinical.urgency }})</h6>
+                            <p class="mb-0">{{ entry.clinical.recommendation }}</p>
+                        </div>
+                        <ul class="nav nav-tabs mt-3" id="adviceTabs{{ loop.index }}" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="treatment-tab{{ loop.index }}" data-bs-toggle="tab" data-bs-target="#treatment{{ loop.index }}" type="button" role="tab">💊 Treatment</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="diet-tab{{ loop.index }}" data-bs-toggle="tab" data-bs-target="#diet{{ loop.index }}" type="button" role="tab">🥗 Diet</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="precautions-tab{{ loop.index }}" data-bs-toggle="tab" data-bs-target="#precautions{{ loop.index }}" type="button" role="tab">⚠️ Precautions</button>
+                            </li>
+                        </ul>
+                        <div class="tab-content p-3 border border-top-0 rounded-bottom" id="adviceTabsContent{{ loop.index }}">
+                            <div class="tab-pane fade show active" id="treatment{{ loop.index }}" role="tabpanel">
+                                <p><strong>Consult:</strong> {{ entry.clinical.consult }}</p>
+                                <p><strong>Treatment Plan:</strong> {{ entry.clinical.treatment }}</p>
+                            </div>
+                            <div class="tab-pane fade" id="diet{{ loop.index }}" role="tabpanel">
+                                <p>{{ entry.clinical.diet }}</p>
+                            </div>
+                            <div class="tab-pane fade" id="precautions{{ loop.index }}" role="tabpanel">
+                                <p>{{ entry.clinical.precautions }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="tab-pane fade" id="retinal-imagery" role="tabpanel">
+                <div class="row p-4">
+                    {% for entry in entries %}
+                    <div class="col-lg-6 mb-4">
+                        <h4 class="mb-3">{{ entry.eye_side }} Eye Imagery</h4>
+                        <div class="mb-2">
+                            <label class="form-label small text-muted">Original Scan (Hover to Zoom)</label>
+                            <div class="img-container" style="position: relative; overflow: hidden; cursor: crosshair; height: 300px; background: #f8f9fa; border: 1px solid #dee2e6;">
+                                 <img src="{{ url_for('static', filename=entry.original_path) }}" class="img-fluid rounded zoom-img" style="width: 100%; height: 100%; object-fit: contain;" alt="Original">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="form-label small text-muted">AI Attention (Grad-CAM)</label>
+                            <div style="height: 300px; background: #f8f9fa; border: 1px solid #dee2e6;">
+                                <img src="{{ url_for('static', filename=entry.heatmap_path) }}" class="img-fluid rounded" style="width: 100%; height: 100%; object-fit: contain;" alt="Heatmap">
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ground Truth Labeling -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card shadow-sm">
+            <div class="card-header border-0 bg-white fw-bold">Set Ground Truth (Doctor/Admin)</div>
+            <div class="card-body">
+                <form method="post" action="{{ url_for('set_label', entry_id=entries[0].id) }}" class="row g-3">
+                    <div class="col-auto">
+                        <select name="true_label" class="form-select">
+                            <option value="No DR">No DR</option>
+                            <option value="Mild">Mild</option>
+                            <option value="Moderate">Moderate</option>
+                            <option value="Severe">Severe</option>
+                            <option value="Proliferative DR">Proliferative DR</option>
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-primary">SAVE LABEL</button>
+                    </div>
+                    <div class="col-12">
+                        <small class="text-muted">Metrics on the dashboard update as labels are saved.</small>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Interactive Tools Script -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    {% if timeline.dates|length > 1 %}
+    const ctx = document.getElementById('timelineChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ timeline.dates | tojson }},
+            datasets: [{
+                label: 'Max Severity (0-4)',
+                data: {{ timeline.scores | tojson }},
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1,
+                fill: true,
+                backgroundColor: 'rgba(75, 192, 192, 0.2)'
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    min: 0,
+                    max: 4,
+                    ticks: {
+                        stepSize: 1,
+                        callback: function(value) {
+                            return ['No DR', 'Mild', 'Moderate', 'Severe', 'Proliferative'][value];
+                        }
+                    }
+                }
+            }
+        }
+    });
+    {% endif %}
+
+    document.querySelectorAll('.img-container').forEach(container => {
+        const img = container.querySelector('img');
+        
+        container.addEventListener('mousemove', function(e) {
+            const { left, top, width, height } = container.getBoundingClientRect();
+            const x = (e.clientX - left) / width * 100;
+            const y = (e.clientY - top) / height * 100;
+            
+            img.style.transformOrigin = `${x}% ${y}%`;
+            img.style.transform = "scale(2.5)";
+        });
+
+        container.addEventListener('mouseleave', function() {
+            img.style.transform = "scale(1)";
+            img.style.transformOrigin = "center center";
+        });
+    });
+</script>
+
+<style>
+    .zoom-img {
+        transition: transform 0.1s ease-out;
+    }
+</style>
+
+{% endblock %}

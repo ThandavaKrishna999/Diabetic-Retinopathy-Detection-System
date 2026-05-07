@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}New Analysis - DR Detector{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <div class="analysis-wizard card shadow-sm">
+            <div class="card-header bg-white border-0 p-4">
+                <div id="wizard-progress" class="progress" style="height: 10px;">
+                    <div class="progress-bar bg-primary" role="progressbar" style="width: 33.3%;" aria-valuenow="33.3" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+            </div>
+            <div class="card-body p-5">
+                <form method="post" enctype="multipart/form-data">
+                    <!-- Step 1: Patient Info -->
+                    <div class="wizard-step active" id="step-1">
+                        <h3 class="mb-4">Step 1: Patient Information</h3>
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                <label for="patient_name" class="form-label">Patient Name / ID</label>
+                                <input type="text" class="form-control form-control-lg" id="patient_name" name="patient_name" placeholder="e.g. John Doe" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="patient_age" class="form-label">Age</label>
+                                <input type="number" class="form-control form-control-lg" id="patient_age" name="patient_age" placeholder="e.g. 45" required>
+                            </div>
+                        </div>
+                        <div class="text-end mt-5">
+                            <button type="button" class="btn btn-primary px-5" onclick="nextStep()">Next</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Image Upload -->
+                    <div class="wizard-step" id="step-2">
+                        <h3 class="mb-4">Step 2: Upload Retinal Scans</h3>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="file_left" class="form-label">Left Eye (OS)</label>
+                                <input class="form-control form-control-lg" type="file" id="file_left" name="file_left" accept=".png, .jpg, .jpeg">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="file_right" class="form-label">Right Eye (OD)</label>
+                                <input class="form-control form-control-lg" type="file" id="file_right" name="file_right" accept=".png, .jpg, .jpeg">
+                            </div>
+                        </div>
+                        <div class="form-text mb-3">Upload at least one image. Supported formats: JPG, PNG.</div>
+                        <div class="d-flex justify-content-between mt-5">
+                            <button type="button" class="btn btn-outline-secondary px-5" onclick="prevStep()">Previous</button>
+                            <button type="button" class="btn btn-primary px-5" onclick="nextStep()">Next</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Enhancement Settings -->
+                    <div class="wizard-step" id="step-3">
+                        <h3 class="mb-4">Step 3: Select AI Enhancement</h3>
+                        <div class="mb-4">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="form-check card p-3 h-100 border rounded">
+                                        <input class="form-check-input ms-0 mb-2" type="radio" name="enhancement" id="none" value="none" checked>
+                                        <label class="form-check-label d-block mt-1" for="none">
+                                            <strong>None (Standard)</strong>
+                                            <div class="small text-muted mt-1">Direct inference with basic normalization.</div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check card p-3 h-100 border rounded">
+                                        <input class="form-check-input ms-0 mb-2" type="radio" name="enhancement" id="clahe" value="clahe">
+                                        <label class="form-check-label d-block mt-1" for="clahe">
+                                            <strong>CLAHE</strong>
+                                            <div class="small text-muted mt-1">Adaptive histogram equalization for contrast.</div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check card p-3 h-100 border-info border rounded">
+                                        <input class="form-check-input ms-0 mb-2" type="radio" name="enhancement" id="ben_graham" value="ben_graham">
+                                        <label class="form-check-label d-block mt-1" for="ben_graham">
+                                            <strong class="text-info">Ben Graham's</strong>
+                                            <div class="small text-muted mt-1">Local mean subtraction for lesion enhancement.</div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-5">
+                            <button type="button" class="btn btn-outline-secondary px-5" onclick="prevStep()">Previous</button>
+                            <button type="submit" class="btn btn-primary px-5">Run Diagnosis</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentStep = 1;
+    const steps = document.querySelectorAll('.wizard-step');
+    const progressBar = document.querySelector('#wizard-progress .progress-bar');
+
+    function showStep(step) {
+        steps.forEach((s, index) => {
+            s.classList.toggle('active', index + 1 === step);
+        });
+        const progress = (step / steps.length) * 100;
+        progressBar.style.width = `${progress}%`;
+        progressBar.setAttribute('aria-valuenow', progress);
+    }
+
+    function nextStep() {
+        if (currentStep < steps.length) {
+            currentStep++;
+            showStep(currentStep);
+        }
+    }
+
+    function prevStep() {
+        if (currentStep > 1) {
+            currentStep--;
+            showStep(currentStep);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        showStep(currentStep);
+    });
+</script>
+
+{% endblock %}

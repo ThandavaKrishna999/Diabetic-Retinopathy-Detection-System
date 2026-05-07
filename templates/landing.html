@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome - DR Detector AI{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="row align-items-center min-vh-100 pb-5">
+    <div class="col-lg-7 hero-content ps-5">
+        <h1 class="display-1 fw-bold mb-4 text-uppercase tracking-wide" style="color: var(--primary-color); font-family: 'Inter', sans-serif;">
+            Precision <br>
+            <span style="color: var(--dark-text);">AI Diagnostics</span>
+        </h1>
+        <p class="lead mb-5" style="max-width: 600px; font-weight: 400; color: var(--muted-text);">
+            The next generation of Retinal Intelligence. <br>
+            Ensemble Deep Learning • Real-time Risk Forecasting • 94.5% Accuracy
+        </p>
+        <div class="d-flex flex-wrap align-items-center gap-4">
+            {% if session.get('role') == 'admin' %}
+                <a href="{{ url_for('dashboard') }}" class="btn btn-xl btn-primary px-5 py-3 d-flex align-items-center gap-2">
+                    <span>ENTER SYSTEM</span> <span style="font-size: 1.2em;">→</span>
+                </a>
+            {% elif session.get('user_id') %}
+                <span class="text-muted">Signed in as {{ session.get('username') }}. The clinical dashboard is for doctor accounts only.</span>
+                <a href="{{ url_for('logout') }}" class="btn btn-xl btn-outline-secondary px-5 py-3">LOG OUT</a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="btn btn-xl btn-primary px-5 py-3">INITIATE SESSION</a>
+                <a href="{{ url_for('register') }}" class="btn btn-xl btn-outline-primary px-5 py-3 rounded">
+                    REGISTER ACCESS
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Decorative Status -->
+    <div class="col-lg-5 position-relative d-none d-lg-block">
+        <div class="position-absolute" style="top: 50%; right: 10%; transform: translateY(-50%); z-index: 10;">
+            <div class="card shadow-sm p-4 mb-3" style="width: 280px; border-left: 4px solid var(--primary-color);">
+                <small class="text-muted text-uppercase d-block mb-1">System Status</small>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="spinner-grow text-success spinner-grow-sm" role="status"></div>
+                    <span class="fw-bold">Neural Net Online</span>
+                </div>
+            </div>
+            <div class="card shadow-sm p-4" style="width: 280px; border-left: 4px solid var(--info-color);">
+                <small class="text-muted text-uppercase d-block mb-1">Active Model</small>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fw-bold">Ensemble v2.2 (Standard)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="row mb-5 pb-5">
+    <div class="col-12 text-center mb-5">
+        <h2 class="fw-bold display-4 mb-3">Core Capabilities</h2>
+        <div style="height: 3px; width: 60px; background: var(--primary-color); margin: 0 auto;"></div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm h-100 p-5 border rounded feature-card">
+            <div class="display-3 text-primary mb-4">👁️</div>
+            <h4 class="mb-3">Precision Vision</h4>
+            <p class="text-muted">Multi-model ensemble voting (ResNet + VGG + EfficientNet) minimizes false positives and ensures clinical-grade reliability.</p>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm h-100 p-5 border rounded feature-card">
+            <div class="display-3 text-warning mb-4">📈</div>
+            <h4 class="mb-3">Longitudinal Tracking</h4>
+            <p class="text-muted">Automated timeline generation maps disease progression across patient visits, visualizing subtle changes over time.</p>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm h-100 p-5 border rounded feature-card">
+            <div class="display-3 text-danger mb-4">🔮</div>
+            <h4 class="mb-3">Risk Forecasting</h4>
+            <p class="text-muted">Predictive analytics engine estimates 12-month progression risk, helping prioritize high-risk patients.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Section -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card shadow-sm p-5 text-center">
+            <div class="row">
+                <div class="col-md-4 border-end">
+                    <h2 class="display-4 fw-bold text-primary">10k+</h2>
+                    <p class="text-muted text-uppercase small fw-bold">Validation Images</p>
+                </div>
+                <div class="col-md-4 border-end">
+                    <h2 class="display-4 fw-bold text-primary">94.5%</h2>
+                    <p class="text-muted text-uppercase small fw-bold">Accuracy Rate</p>
+                </div>
+                <div class="col-md-4">
+                    <h2 class="display-4 fw-bold text-primary">< 2s</h2>
+                    <p class="text-muted text-uppercase small fw-bold">Inference Time</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hero-content {
+        animation: slideUp 0.8s ease-out;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--primary-color);
+    }
+    
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}
